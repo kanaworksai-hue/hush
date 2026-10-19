@@ -1,0 +1,14 @@
+node_modules/
+dist/
+public/assets/
+data/
+runs/
+captures/
+*.log
+__pycache__/
+.venv/
+.DS_Store
+Thumbs.db
+AGENTS.md
+CLAUDE.md
+.claude/

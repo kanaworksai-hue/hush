@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="color-scheme" content="dark" />
+    <title>Hush — 1 spp path tracing, denoised in real time</title>
+    <style>
+      :root { --fg: #e8e6e1; --dim: #9a978f; --panel: rgba(16, 16, 18, 0.72); --line: rgba(255, 255, 255, 0.14); --acc: #f2c879; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; background: #000; color: var(--fg); overflow: hidden;
+        font: 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-tap-highlight-color: transparent; }
+      #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: ew-resize; }
+      .panel { position: fixed; background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--line); border-radius: 10px; }
+      #hud { left: max(10px, env(safe-area-inset-left)); top: max(10px, env(safe-area-inset-top)); padding: 8px 11px; min-width: 210px;
+        pointer-events: none; font: 12px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+      #hud b { font: 600 14px/1.2 system-ui, -apple-system, sans-serif; letter-spacing: 0.02em; }
+      #hud .row { display: flex; justify-content: space-between; gap: 14px; }
+      #hud .row span:last-child { color: var(--acc); font-variant-numeric: tabular-nums; }
+      #hud .dim { color: var(--dim); }
+      #hud .credit { color: var(--dim); font: 10px/1.4 system-ui, sans-serif; margin-top: 4px; opacity: 0.7; }
+      #bar { left: 0; right: 0; margin: 0 auto; width: fit-content; bottom: max(10px, env(safe-area-inset-bottom)); padding: 8px; display: flex;
+        flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: center; max-width: calc(100vw - 20px); }
+      .grp { display: flex; align-items: center; gap: 6px; }
+      .grp > label { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+      .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+      .seg button, .btn { appearance: none; border: 0; background: transparent; color: var(--fg); font: inherit; padding: 6px 10px;
+        min-height: 32px; cursor: pointer; }
+      .seg button + button { border-left: 1px solid var(--line); }
+      .seg button.on { background: rgba(242, 200, 121, 0.22); color: #fff; }
+      .btn { border: 1px solid var(--line); border-radius: 7px; }
+      select { appearance: none; background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 7px;
+        font: inherit; padding: 6px 10px; min-height: 32px; }
+      .tag { position: fixed; top: calc(50% + 24px); padding: 4px 10px; border-radius: 999px; background: var(--panel);
+        border: 1px solid var(--line); font-weight: 600; pointer-events: none; transform: translateX(-50%); white-space: nowrap; }
+      #grip { position: fixed; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: #fff;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.6); pointer-events: none; display: grid; place-items: center; color: #222; font-size: 13px; }
+      #msg { left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 14px 18px; text-align: center; max-width: 90vw; }
+      #bench { right: max(10px, env(safe-area-inset-right)); top: max(10px, env(safe-area-inset-top)); padding: 8px 11px;
+        font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre; max-height: 60vh; overflow: auto; }
+      @media (max-width: 640px), (max-height: 500px) {
+        html, body { font-size: 12px; }
+        #bar { gap: 5px 8px; padding: 5px; }
+        .grp > label.opt { display: none; }
+        .seg button, .btn, select { padding: 4px 8px; min-height: 28px; }
+        #hud { min-width: 0; padding: 6px 9px; font-size: 10px; }
+        #hud b { font-size: 12px; }
+        #hud b + .dim, #hud .credit { display: none; }
+        .tag { padding: 2px 8px; font-size: 11px; }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <div class="tag" id="tagL">1 spp</div>
+    <div class="tag" id="tagR">Hush</div>
+    <div id="grip">⇔</div>
+    <div class="panel" id="hud"><b>Hush</b> <span class="dim">real-time denoiser for 1 spp path tracing (WebGPU)</span><div id="hudBody" class="dim">starting…</div><div class="credit">Models / textures: Poly Haven (CC0), RobotExpressive by Tomás Laulhé (CC0)</div></div>
+    <div class="panel" id="bar">
+      <div class="grp"><label class="opt">Scene</label><div class="seg" id="scene"></div></div>
+      <div class="grp"><label>Left</label><div class="seg" id="left"></div></div>
+      <div class="grp"><label>Right</label><div class="seg" id="right"></div></div>
+      <div class="grp"><label class="opt">Res</label><select id="scale"></select></div>
+      <div class="grp"><button class="btn" id="pause">Pause</button><button class="btn" id="benchBtn">Benchmark</button></div>
+    </div>
+    <div class="panel" id="msg" hidden></div>
+    <div class="panel" id="bench" hidden></div>
+    <script type="module" src="/src/demo/demo.js"></script>
+  </body>
+</html>

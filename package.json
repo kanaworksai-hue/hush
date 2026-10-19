@@ -1,0 +1,65 @@
+{
+  "name": "hush",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Real-time denoiser for 1 spp path tracing on WebGPU (works with three.js WebGPURenderer)",
+  "author": "東京AI映像合同会社",
+  "license": "MIT",
+  "homepage": "https://hush.tokyoaivisuals.club",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kanaworksai-hue/hush.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "three": "~0.186.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  },
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./pathtracer": {
+      "types": "./src/pt/index.d.ts",
+      "default": "./src/pt/index.js"
+    }
+  },
+  "files": [
+    "src/index.js",
+    "src/index.d.ts",
+    "src/denoise/",
+    "src/pt/",
+    "LICENSE",
+    "README.md",
+    "THIRD_PARTY.md",
+    "!src/denoise/hush-weights.bin"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "webgpu",
+    "denoiser",
+    "path tracing",
+    "three.js",
+    "wgsl",
+    "svgf"
+  ],
+  "peerDependencies": {
+    "three": ">=0.180.0"
+  },
+  "peerDependenciesMeta": {
+    "three": {
+      "optional": true
+    }
+  }
+}
