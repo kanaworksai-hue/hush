@@ -21,5 +21,5 @@ The demo scenes and the three.js example load models, textures and HDRIs that `t
 
 ## KanaWorks_AI artwork
 
-`public/brand/` (the logo and the character Kana shown in the demo scenes) is © KanaWorks_AI and **not** covered by
-the MIT license; see [`public/brand/README.md`](public/brand/README.md). The demo runs without it with `?brand=0`.
+`public/brand/`, `docs/brand/` and the banners in `docs/assets/` (the KanaWorks_AI logo and the character Kana) are © 東京AI映像合同会社 and **not** covered by
+the MIT license; see [`docs/brand/README.md`](docs/brand/README.md). The demo runs without them with `?brand=0`.

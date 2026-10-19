@@ -1,5 +1,5 @@
 // KanaWorks_AI artwork placed in the demo scenes (demo only: the training / evaluation scenes in scenes.js stay
-// unchanged). Images in public/brand/ (© KanaWorks_AI, see public/brand/README.md).
+// unchanged). Images in public/brand/ (© 東京AI映像合同会社, see docs/brand/README.md).
 import * as THREE from 'three';
 
 const loader = new THREE.ImageBitmapLoader();
