@@ -55,7 +55,7 @@ Status: research prototype. The built-in weights were trained on these three exa
 
 The fastest way to see it is the **[live demo](https://hush.tokyoaivisuals.club)**: drag the divider to compare 1 spp, SVGF and Hush. It needs a browser with WebGPU (Chrome / Edge 113+, Safari 26+).
 
-To run the demos locally (Node.js 20+, and Python 3 for the asset download):
+To run the demos locally (Node.js 20.19+, and Python 3 for the asset download):
 
 ```bash
 git clone https://github.com/kanaworksai-hue/hush.git
@@ -69,6 +69,12 @@ npm run dev                    # http://localhost:5180/                 comparis
 `npm run build` writes a static site to `dist/`. WebGPU only works in a secure context, so to try a local build on a phone, serve it over https (or just use the live demo).
 
 ## 🧰 API
+
+Hush is not on npm yet (the `hush` package there is an unrelated project). Install it from GitHub; the import name is still `hush`:
+
+```bash
+npm install github:kanaworksai-hue/hush
+```
 
 ```js
 import { Hush } from 'hush';

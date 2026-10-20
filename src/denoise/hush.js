@@ -726,8 +726,8 @@ export class Hush {
   static requiredLimits = REQUIRED_LIMITS;
 
   // options: { width, height, exposure = 1, weights = built-in (ArrayBuffer, typed array or base64 string of the f16
-  // values the export script writes; the MLP width follows from the count), f16 = false (MLP in shader-f16; no gain on
-  // RTX 3060) }
+  // values in the layout of hush-weights.bin; the MLP width follows from the count), f16 = false (MLP in shader-f16;
+  // no gain on RTX 3060) }
   constructor(device, options = {}) {
     const { width, height, exposure = 1, weights = DEFAULT_WEIGHTS, f16 = false } = options;
     for (const [k, v] of Object.entries(REQUIRED_LIMITS)) {

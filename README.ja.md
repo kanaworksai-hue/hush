@@ -55,7 +55,7 @@ Hush は、SVGF 式の時間方向の蓄積と、ピクセルごとの小さな�
 
 いちばん手軽なのは **[ライブデモ](https://hush.tokyoaivisuals.club)** です。分割線をドラッグして 1 spp・SVGF・Hush を見比べられます。WebGPU 対応ブラウザ（Chrome / Edge 113 以降、Safari 26 以降）が必要です。
 
-ローカルでデモを動かす場合（Node.js 20 以降、素材のダウンロードに Python 3）：
+ローカルでデモを動かす場合（Node.js 20.19 以降、素材のダウンロードに Python 3）：
 
 ```bash
 git clone https://github.com/kanaworksai-hue/hush.git
@@ -66,9 +66,15 @@ npm run dev                    # http://localhost:5180/                 比較�
                                # http://localhost:5180/examples/three/  three.js サンプル
 ```
 
-`npm run build` で `dist/` に静的サイトが出力されます。WebGPU は安全なコンテキスト（https）でしか使えないため、ローカルのビルドをスマートフォンで試すときは https で配信してください（ライブデモを使うのが簡単です）。
+`npm run build` で `dist/` に静的サイトが出力されます。WebGPU は安全なコンテキスト（https または localhost）でしか使えないため、ローカルのビルドをスマートフォンで試すときは https で配信してください（ライブデモを使うのが簡単です）。
 
 ## 🧰 API
+
+Hush はまだ npm に公開していません（npm の `hush` は無関係の別パッケージです）。GitHub からインストールしてください。インポート名は `hush` のままです：
+
+```bash
+npm install github:kanaworksai-hue/hush
+```
 
 ```js
 import { Hush } from 'hush';
@@ -113,9 +119,9 @@ await renderer.init();
 const device = renderer.backend.device;
 ```
 
-[`examples/three/`](examples/three/main.js) では、普通の three.js シーングラフ（glTF モデル、`scene.environment` に設定した HDRI、`PointLight`）を同梱のパストレーサー（`hush/pathtracer`）で描き、Hush でノイズ除去して、three.js で表示しています（出力テクスチャごとに `ExternalTexture` を作ってフルスクリーンの板に貼り、トーンマッピングは three.js が担当）。ドラッグで視点を回せます。
+[`examples/three/`](examples/three/main.js) では、普通の three.js シーングラフ（glTF モデル、`scene.environment` に設定した HDRI、`PointLight`）を同梱のパストレーサー（`hush/pathtracer`）で描き、Hush でノイズ除去して、three.js で表示しています（出力テクスチャごとに `ExternalTexture` を作ってフルスクリーンの板ポリゴンに貼り、トーンマッピングは three.js が担当）。ドラッグで視点を回せます。
 
-パストレーサーは `MeshStandardMaterial` / `MeshPhysicalMaterial` のメッシュ（ベースカラー、ラフネス / メタルネス、法線マップ、自己発光、なめらかなガラス）に対応しています。動くオブジェクトやスキンメッシュは `userData.dynamic = true` を付けたグループの下に置きます。ライト：`scene.environment`（`HDRLoader` などで読み込んだ正距円筒図法の HDR テクスチャ。重点的サンプリングを行い、太陽はシャープな太陽光として取り出します）、`DirectionalLight`、`PointLight`（`userData.radius`）、`HemisphereLight`。
+パストレーサーは `MeshStandardMaterial` / `MeshPhysicalMaterial` のメッシュ（ベースカラー、ラフネス / メタルネス、法線マップ、自己発光、なめらかなガラス）に対応しています。動くオブジェクトやスキンメッシュは `userData.dynamic = true` を付けたグループの下に置きます。ライト：`scene.environment`（`HDRLoader` などで読み込んだ正距円筒図法の HDR テクスチャ。重点サンプリングを行い、太陽はシャープな太陽光として取り出します）、`DirectionalLight`、`PointLight`（`userData.radius`）、`HemisphereLight`。
 
 ## 📁 リポジトリの内容
 

@@ -19,7 +19,7 @@
 
 </div>
 
-**Hush** 在浏览器里实时把每像素 1 个采样（1 spp）的路径追踪噪声图变成干净、时间上稳定的画面。它是几个跑在你自己 `GPUDevice` 上的 WebGPU compute pass：把噪声图和 G-buffer（法线、深度、albedo、运动向量）以 `GPUTexture` 传进去，拿回降噪后的纹理。three.js `WebGPURenderer` 和其他 WebGPU 渲染器都能用。
+**Hush** 在浏览器里实时把每像素 1 个采样（1 spp）的路径追踪噪声图变成干净、帧间稳定的画面。它是几个跑在你自己 `GPUDevice` 上的 WebGPU compute pass：把噪声图和 G-buffer（法线、深度、albedo、运动向量）以 `GPUTexture` 传进去，拿回降噪后的纹理。three.js `WebGPURenderer` 和其他 WebGPU 渲染器都能用。
 
 <p align="center">
   <img src="docs/media/hero.jpg" alt="客厅：左边 1 spp，右边 Hush 降噪后" width="820">
@@ -55,7 +55,7 @@ Hush 把 SVGF 式的时域累积和一个很小的逐像素网络结合起来：
 
 最快的方式是打开 **[在线 demo](https://hush.tokyoaivisuals.club)**：拖动分割线比较 1 spp、SVGF 和 Hush。需要支持 WebGPU 的浏览器（Chrome / Edge 113+、Safari 26+）。
 
-在本地运行 demo（需要 Node.js 20+，下载素材需要 Python 3）：
+在本地运行 demo（需要 Node.js 20.19+，下载素材需要 Python 3）：
 
 ```bash
 git clone https://github.com/kanaworksai-hue/hush.git
@@ -66,9 +66,15 @@ npm run dev                    # http://localhost:5180/                 对比 d
                                # http://localhost:5180/examples/three/  three.js 示例
 ```
 
-`npm run build` 会在 `dist/` 生成静态网站。WebGPU 只能在安全上下文（https）里使用，想在手机上试本地构建的话要用 https 提供（或者直接用在线 demo）。
+`npm run build` 会在 `dist/` 生成静态网站。WebGPU 只能在安全上下文（https 或 localhost）里使用，想在手机上试本地构建的话要用 https 提供（或者直接用在线 demo）。
 
 ## 🧰 API
+
+Hush 还没有发布到 npm（npm 上的 `hush` 是另一个无关的包），请从 GitHub 安装，导入名仍然是 `hush`：
+
+```bash
+npm install github:kanaworksai-hue/hush
+```
 
 ```js
 import { Hush } from 'hush';
@@ -94,7 +100,7 @@ hush.exposure = 2;     // 显示曝光
 
 | 纹理 | 内容 |
 |---|---|
-| `radiance` | 1 spp 噪声辐射度，不含首次命中点的自发光 |
+| `radiance` | 1 spp 的含噪辐射亮度，不含首次命中点的自发光 |
 | `normalDepth` | 世界空间法线（xyz），线性视深（w，负数 = 天空） |
 | `motion` | 上一帧 − 当前像素位置（xy，像素），物体 id（z，整数 < 2048），上一帧线性深度（w） |
 | `material` | albedo（rgb），粗糙度（a） |
@@ -145,9 +151,9 @@ examples/minimal/   不依赖渲染器的 API 用法
 
 ## 📄 许可与致谢
 
-- **本项目：** [MIT](LICENSE) © 东京AI映像合同会社。
+- **本项目：** [MIT](LICENSE) © 東京AI映像合同会社。
 - **Demo 素材：** 模型、贴图和 HDRI 来自 [Poly Haven](https://polyhaven.com)（CC0），RobotExpressive 作者 Tomás Laulhé（CC0），由 `tools/fetch_assets.py` 下载，不包含在仓库里。详见 [`THIRD_PARTY.md`](THIRD_PARTY.md)。
-- **品牌：** KanaWorks_AI 名称、logo 和 Kana 形象（`docs/brand/`、`public/brand/`、横幅和 demo 场景里）版权归东京AI映像合同会社所有，**不在** MIT 授权范围内，见 [docs/brand](docs/brand/README.md)。demo 加 `?brand=0` 可以不显示。
+- **品牌：** KanaWorks_AI 名称、logo 和 Kana 形象（`docs/brand/`、`public/brand/`、横幅和 demo 场景里）版权归東京AI映像合同会社所有，**不在** MIT 授权范围内，见 [docs/brand](docs/brand/README.md)。demo 加 `?brand=0` 可以不显示。
 - **基于：** [WebGPU](https://www.w3.org/TR/webgpu/) 和 [three.js](https://threejs.org)。降噪器参照了 SVGF（Schied et al. 2017）和学习预测滤波参数方面的公开研究。
 
 <br>

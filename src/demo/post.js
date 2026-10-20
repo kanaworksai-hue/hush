@@ -1,9 +1,9 @@
-// Display post for the demo and the video: split-screen composite of two linear HDR images, bloom, vignette, AgX tone
-// mapping, sRGB. Display only: the denoisers and the quality metrics (ACES) never see it.
+// Display post for the demo: split-screen composite of two linear HDR images, bloom, vignette, AgX tone mapping,
+// sRGB. Display only: the denoisers never see it.
 //
 //   const post = new Post(device, format);
 //   post.encode(encoder, { left, right, split, exposure, target: canvasView, width: canvas.width, height: canvas.height });
-//   three panels (videos): add mid + split2 -> left | mid | right with dividers at split and split2; same: true with
+//   three panels: add mid + split2 -> left | mid | right with dividers at split and split2; same: true with
 //   thirds -> each panel shows the middle third of its own image (the same region side by side)
 
 const FULLSCREEN = /* wgsl */ `

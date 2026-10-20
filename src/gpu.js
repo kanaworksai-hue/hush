@@ -1,4 +1,4 @@
-// Small WebGPU helpers: device, timestamp timer, texture readback, compose/display passes.
+// Small WebGPU helpers for the demo: device, timestamp timer, compose pass.
 
 export async function initDevice() {
   if (!navigator.gpu) throw new Error('WebGPU not available');
@@ -76,38 +76,6 @@ export class GpuTimer {
   }
 }
 
-const BPP = { rgba16float: 8, rgba32float: 16, rgba32uint: 16, rgba8unorm: 4, bgra8unorm: 4 };
-
-// Reads a 2D texture back as raw bytes (row padding removed).
-export async function readTexture(device, tex) {
-  const bpp = BPP[tex.format];
-  const w = tex.width, h = tex.height;
-  const row = Math.ceil((w * bpp) / 256) * 256;
-  const buf = device.createBuffer({ size: row * h, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
-  const enc = device.createCommandEncoder();
-  enc.copyTextureToBuffer({ texture: tex }, { buffer: buf, bytesPerRow: row }, [w, h]);
-  device.queue.submit([enc.finish()]);
-  await buf.mapAsync(GPUMapMode.READ);
-  const src = new Uint8Array(buf.getMappedRange());
-  const out = new Uint8Array(w * h * bpp);
-  for (let y = 0; y < h; y++) out.set(src.subarray(y * row, y * row + w * bpp), y * w * bpp);
-  buf.unmap();
-  buf.destroy();
-  return out;
-}
-
-export async function readBuffer(device, src, size) {
-  const buf = device.createBuffer({ size, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
-  const enc = device.createCommandEncoder();
-  enc.copyBufferToBuffer(src, 0, buf, 0, size);
-  device.queue.submit([enc.finish()]);
-  await buf.mapAsync(GPUMapMode.READ);
-  const out = new Uint8Array(buf.getMappedRange().slice(0));
-  buf.unmap();
-  buf.destroy();
-  return out;
-}
-
 const COMPOSE = /* wgsl */ `
 struct P { size: vec2u, mode: u32, _p: u32 };
 @group(0) @binding(0) var<uniform> prm: P;
@@ -159,71 +127,5 @@ export class Composer {
     pass.setBindGroup(0, bg);
     pass.dispatchWorkgroups(Math.ceil(this.w / 8), Math.ceil(this.h / 8));
     pass.end();
-  }
-}
-
-const DISPLAY = /* wgsl */ `
-struct P { split: f32, exposure: f32, w: f32, h: f32 };
-@group(0) @binding(0) var<uniform> prm: P;
-@group(0) @binding(1) var left: texture_2d<f32>;
-@group(0) @binding(2) var right: texture_2d<f32>;
-struct VO { @builtin(position) pos: vec4f, @location(0) uv: vec2f };
-@vertex fn vs(@builtin(vertex_index) i: u32) -> VO {
-  let p = vec2f(f32((i << 1u) & 2u), f32(i & 2u));
-  var o: VO;
-  o.pos = vec4f(p * 2.0 - 1.0, 0.0, 1.0);
-  o.uv = vec2f(p.x, 1.0 - p.y);
-  return o;
-}
-// ACES fitted (Narkowicz 2015); Hush evaluates metrics after this same curve
-fn aces(x: vec3f) -> vec3f { return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), vec3f(0.0), vec3f(1.0)); }
-fn srgb(c: vec3f) -> vec3f { return select(1.055 * pow(c, vec3f(1.0 / 2.4)) - 0.055, c * 12.92, c <= vec3f(0.0031308)); }
-@fragment fn fs(i: VO) -> @location(0) vec4f {
-  let px = vec2i(i.uv * vec2f(prm.w, prm.h));
-  var c: vec3f;
-  if (i.uv.x < prm.split) { c = textureLoad(left, px, 0).rgb; } else { c = textureLoad(right, px, 0).rgb; }
-  var o = srgb(aces(max(c, vec3f(0.0)) * prm.exposure));
-  if (abs(i.uv.x - prm.split) * prm.w < 1.0) { o = vec3f(1.0); }
-  return vec4f(o, 1.0);
-}
-`;
-
-export class Display {
-  constructor(device, context, format) {
-    this.device = device;
-    this.context = context;
-    this.ubo = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-    const module = device.createShaderModule({ code: DISPLAY });
-    this.pipe = device.createRenderPipeline({
-      layout: 'auto', vertex: { module, entryPoint: 'vs' }, fragment: { module, entryPoint: 'fs', targets: [{ format }] },
-    });
-  }
-  encode(encoder, left, right, split, exposure) {
-    this.device.queue.writeBuffer(this.ubo, 0, new Float32Array([split, exposure, left.width, left.height]));
-    const bg = this.device.createBindGroup({
-      layout: this.pipe.getBindGroupLayout(0),
-      entries: [{ binding: 0, resource: { buffer: this.ubo } }, { binding: 1, resource: left.createView() }, { binding: 2, resource: right.createView() }],
-    });
-    const pass = encoder.beginRenderPass({
-      colorAttachments: [{ view: this.context.getCurrentTexture().createView(), loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }],
-    });
-    pass.setPipeline(this.pipe);
-    pass.setBindGroup(0, bg);
-    pass.draw(3);
-    pass.end();
-  }
-}
-
-// POST to a dev-server save endpoint (when the server has one); retried, a long capture should not die on one dropped request
-export async function save(path, bytes, tries = 5) {
-  for (let i = 1; ; i++) {
-    try {
-      const r = await fetch(`/api/save?path=${encodeURIComponent(path)}`, { method: 'POST', body: bytes });
-      if (r.ok) return;
-      if (i >= tries) throw new Error(`save failed ${path}: ${r.status}`);
-    } catch (e) {
-      if (i >= tries) throw e;
-    }
-    await new Promise((res) => setTimeout(res, 500 * i));
   }
 }

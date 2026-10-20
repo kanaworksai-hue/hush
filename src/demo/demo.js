@@ -1,6 +1,6 @@
 // Comparison demo: one 1 spp path-traced frame per display frame, denoised by SVGF and Hush; drag the divider to
 // compare any two of 1 spp / SVGF / Hush. Works with touch; the render resolution is a fraction of the screen's device
-// pixels. "Benchmark" times every scene on this device (and saves it when the dev server has a save endpoint).
+// pixels. "Benchmark" times every scene on this device (the result is also in window.__bench).
 //
 //   ?scene=box|living|courtyard&left=noisy|svgf|hush&right=...&scale=0.5[&all]
 //   &brand=0: without the KanaWorks_AI artwork (src/demo/brand.js)
@@ -11,7 +11,7 @@ import * as THREE from 'three';
 import { SCENES } from '../scenes.js';
 import { SceneGPU, PathTracer, JITTER } from '../pt/index.js';
 import { Hush, SVGF } from '../index.js';
-import { initDevice, GpuTimer, Composer, save } from '../gpu.js';
+import { initDevice, GpuTimer, Composer } from '../gpu.js';
 import { addBrand } from './brand.js';
 import { Post } from './post.js';
 
@@ -288,10 +288,7 @@ $('benchBtn').onclick = async () => {
     const f = (x) => (x == null ? '  n/a' : x.toFixed(2).padStart(6));
     lines.push(`${k.padEnd(10)} frame ${v.frameMs.toFixed(1).padStart(6)} ms  PT ${f(v.ptMs)}  SVGF ${f(v.svgfMs)}  Hush ${f(v.hushMs)}`);
   }
-  const name = `captures/devices/${out.date.replace(/[:.]/g, '-')}.json`;
-  // one try: only a dev server with the save endpoint accepts it
-  const saved = await save(name, new TextEncoder().encode(JSON.stringify(out, null, 1)), 1).then(() => true).catch(() => false);
-  lines.push('', ...(saved ? [`saved to ${name}`] : []), 'tap to close');
+  lines.push('', 'tap to close');
   box.textContent = lines.join('\n');
   box.onclick = () => { box.hidden = true; };
   window.__bench = out;
